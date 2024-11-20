@@ -44,19 +44,14 @@ def chat():
                 thread_id=thread.id,
                 run_id=run.id
             )
-            time.sleep(0.5)  # Add a small delay to prevent too many API calls
-            
-        if run.status == "failed":
-            return jsonify({'error': 'Assistant failed to respond'}), 500
-            
-        # Get the assistant's response
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        assistant_response = messages.data[0].content[0].text.value
         
-        return jsonify({'response': assistant_response})
-    
+        if run.status == "completed":
+            response_message = run.result['message']
+            return jsonify({'message': response_message})
+        else:
+            return jsonify({'error': 'Assistant run failed'}), 500
     except Exception as e:
-        print(f"Error: {str(e)}")  # Add this for debugging
+        print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
