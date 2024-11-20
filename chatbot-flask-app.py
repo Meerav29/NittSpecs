@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import time
 
 # Load environment variables
 load_dotenv()
@@ -21,7 +22,7 @@ def chat():
     try:
         user_message = request.json['message']
         
-        # Create a thread if it doesn't exist
+        # Create a thread
         thread = client.beta.threads.create()
         
         # Add the user's message to the thread
@@ -38,12 +39,16 @@ def chat():
         )
         
         # Wait for the completion
-        while run.status != 'completed':
+        while run.status not in ["completed", "failed"]:
             run = client.beta.threads.runs.retrieve(
                 thread_id=thread.id,
                 run_id=run.id
             )
-        
+            time.sleep(0.5)  # Add a small delay to prevent too many API calls
+            
+        if run.status == "failed":
+            return jsonify({'error': 'Assistant failed to respond'}), 500
+            
         # Get the assistant's response
         messages = client.beta.threads.messages.list(thread_id=thread.id)
         assistant_response = messages.data[0].content[0].text.value
@@ -51,6 +56,7 @@ def chat():
         return jsonify({'response': assistant_response})
     
     except Exception as e:
+        print(f"Error: {str(e)}")  # Add this for debugging
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

@@ -7,6 +7,9 @@ function sendMessage() {
     appendMessage('user', message);
     userInput.value = '';
 
+    // Show loading indicator
+    appendMessage('loading', 'Thinking...');
+
     // Send to backend
     fetch('/chat', {
         method: 'POST',
@@ -17,14 +20,20 @@ function sendMessage() {
     })
     .then(response => response.json())
     .then(data => {
+        // Remove loading message
+        document.querySelector('.loading-message')?.remove();
+        
         if (data.error) {
-            appendMessage('error', 'Sorry, something went wrong.');
+            appendMessage('error', 'Sorry, something went wrong: ' + data.error);
         } else {
             appendMessage('bot', data.response);
         }
     })
     .catch(error => {
-        appendMessage('error', 'Sorry, something went wrong.');
+        // Remove loading message
+        document.querySelector('.loading-message')?.remove();
+        appendMessage('error', 'Sorry, something went wrong. Please try again.');
+        console.error('Error:', error);
     });
 }
 
