@@ -1,47 +1,39 @@
 function sendMessage() {
-    const userInput = document.getElementById('userInput');
-    const message = userInput.value.trim();
-    if (!message) return;
+    const userInput = document.getElementById('user-input');
+    const message = userInput.value;
+    if (message.trim() === '') return;
 
-    // Display user message
-    appendMessage('user', message);
-    userInput.value = '';
+    // Display user's message
+    displayMessage('user', message);
 
-    // Show loading indicator
-    appendMessage('loading', 'Thinking...');
-
-    // Send to backend
+    // Send message to the server
     fetch('/chat', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ message: message })
     })
     .then(response => response.json())
     .then(data => {
-        // Remove loading message
-        document.querySelector('.loading-message')?.remove();
-        
-        if (data.error) {
-            appendMessage('error', 'Sorry, something went wrong: ' + data.error);
+        if (data.message) {
+            displayMessage('bot', data.message);
         } else {
-            appendMessage('bot', data.response);
+            displayMessage('bot', 'Error: ' + data.error);
         }
     })
     .catch(error => {
-        // Remove loading message
-        document.querySelector('.loading-message')?.remove();
-        appendMessage('error', 'Sorry, something went wrong. Please try again.');
-        console.error('Error:', error);
+        displayMessage('bot', 'Error: ' + error.message);
     });
+
+    userInput.value = '';
 }
 
-function appendMessage(sender, message) {
-    const chatBox = document.getElementById('chatBox');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${sender}-message`;
-    messageDiv.textContent = message;
-    chatBox.appendChild(messageDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
+function displayMessage(sender, message) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', sender);
+    messageElement.textContent = message;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
